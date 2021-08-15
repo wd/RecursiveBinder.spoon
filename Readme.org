@@ -1,0 +1,44 @@
+#+TITLE: Readme
+
+This spoon forks from https://www.hammerspoon.org/Spoons/RecursiveBinder.html, add order support to the shortcuts notify bar
+
+#+html: <img width=500px src="https://github.com/wd/RecursiveBinder.spoon/blob/main/screenshots/shortcuts.jpg?raw=true" />
+
+** Install
+
+#+begin_src shell
+cd ~/.hammerspoon/Spoons/
+git clone https://github.com/wd/RecursiveBinder.spoon
+#+end_src
+
+** Usage
+
+Put the codes below to your =.hammerspoon/init.lua=
+
+#+begin_src lua
+local rBinder = hs.loadSpoon("RecursiveBinder")
+local rBinderKeyMap = {
+    [singleKey('r', 'Reload') ] = function() hs.reload() end,
+    [singleKey('e', 'Emacs')] = function() runApp('Emacs.app') end,
+    [singleKey('w', 'Wechat')] = function() runApp('WeChat.app') end,
+    [singleKey('k', 'Kitty')] = function() runApp('kitty.app') end,
+    [singleKey('g', 'Chrome')] = function() runApp('Google Chrome.app') end,
+    [singleKey('s', 'Slack')] = function() runApp('Slack.app') end,
+
+    [singleKey('-', '')] = function() end, -- This will add a new line
+
+    [singleKey('=', 'SwapWin')] = function() win.swapWin() end,
+    [singleKey('h', 'Left')] = function() win.moveAndResize('left') end,
+    [singleKey('l', 'Right')] = function() win.moveAndResize('right') end,
+    [singleKey('m', 'Max')] = function() win.moveAndResize('fullscreen') end,
+    [singleKey('f', 'Center')] = function() win.moveAndResize('center') end,
+    [singleKey('n', 'Center-')] = function() win.moveAndResize('centerSmall') end,
+
+    [singleKey('o', 'Send+')] = {
+        [singleKey('h', 'Left')] = function() win.sendCurrentWindow(); win.moveAndResize('left') end,
+        [singleKey('l', 'Right')] = function() win.sendCurrentWindow(); win.moveAndResize('right') end,
+        [singleKey('o', 'Other')] = function() win.sendCurrentWindow() end},
+}
+
+hs.hotkey.bind({"cmd", "ctrl"}, 'space', nil, rBinder.recursiveBind(rBinderKeyMap))
+#+end_src

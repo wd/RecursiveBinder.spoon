@@ -1,3 +1,4 @@
+
 --- === RecursiveBinder ===
 ---
 --- A spoon that let you bind sequential bindings.
@@ -7,7 +8,6 @@
 
 local obj={}
 obj.__index = obj
-
 
 -- Metadata
 obj.name = "RecursiveBinder"
@@ -67,6 +67,8 @@ obj.helperModifierMapping = {
 
 -- used by next model to close previous helper
 local previousHelperID = nil
+
+local keyIndex = 0
 
 -- this function is used by helper to display 
 -- appropriate 'shift + key' bindings
@@ -132,7 +134,8 @@ end
 
 --- RecursiveBinder.singleKey(key, name)
 --- Method
---- this function simply return a table with empty modifiers also it translates capital letters to normal letter with shift modifer
+--- this function simply return a table with empty modifiers
+--- also it translates capital letters to normal letter with shift modifer
 ---
 --- Parameters:
 ---  * key - a letter
@@ -148,10 +151,11 @@ function obj.singleKey(key, name)
       key = string.lower(key)
    end
 
+   keyIndex = keyIndex +  1
    if name then
-      return {mod, key, name}
+      return {mod, key, name, keyIndex}
    else
-      return {mod, key, 'no name'}
+      return {mod, key, nil, keyIndex}
    end
 end
 
@@ -195,7 +199,9 @@ local function showHelper(keyFuncNameTable)
    local separator = '' -- first loop doesn't need to add a separator, because it is in the very front. 
    local lastLine = ''
    local count = 0
-   for keyName, funcName in pairs(keyFuncNameTable) do
+   for _idx, binding in pairs(keyFuncNameTable) do
+      local keyName = binding["key"]
+      local funcName = binding["desc"]
       count = count + 1
       local newEntry = keyName..' → '..funcName
       -- make sure each entry is of the same length
@@ -206,12 +212,16 @@ local function showHelper(keyFuncNameTable)
       end
       -- create new line for every helperEntryEachLine entries
       if count % (obj.helperEntryEachLine + 1) == 0 then
-         separator = '\n '
+         separator = '\n'
+      elseif funcName == '' then
+         newEntry = ''
+         separator = '\n'
       elseif count == 1 then
          separator = ' '
       else
-         separator = '  '
+         separator = ' '
       end
+
       helper = helper..separator..newEntry
    end
    helper = string.match(helper, '[^\n].+$')
@@ -252,11 +262,14 @@ function obj.recursiveBind(keymap)
    local keyFuncNameTable = {}
    for key, map in pairs(keymap) do
       local func = obj.recursiveBind(map)
-      -- key[1] is modifiers, i.e. {'shift'}, key[2] is key, i.e. 'f' 
+      -- key[1] is modifiers, i.e. {'shift'}, key[2] is key, i.e. 'f', k[3] is the name, k[4] is the index
       modal:bind(key[1], key[2], function() modal:exit() killHelper() func() end)
       modal:bind(obj.escapeKey[1], obj.escapeKey[2], function() modal:exit() killHelper() end)
       if #key >= 3 then
-         keyFuncNameTable[createKeyName(key)] = key[3]
+         keyFuncNameTable[key[4]] = {
+            ["key"] = createKeyName(key),
+            ["desc"] = key[3]
+         }
       end
    end
    return function()
